@@ -46,3 +46,11 @@ body:
       placeholder: "e.g., Must use existing auth middleware, response time < 200ms..."
     validations:
       required: false
+
+  - type: checkboxes
+    id: auto_develop
+    attributes:
+      label: AI Development
+      description: Let the AI agent implement this feature automatically
+      options:
+        - label: "Yes, auto-develop this feature"

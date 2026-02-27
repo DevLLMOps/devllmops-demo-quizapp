@@ -68,3 +68,7 @@ make test        # Run integration tests
 make prod        # Start production environment
 make down        # Stop all services
 ```
+
+## Reviews
+
+Find review instructions at [REVIEW.md](./REVIEW.md)
