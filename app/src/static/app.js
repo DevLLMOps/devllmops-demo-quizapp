@@ -20,6 +20,8 @@ function showQuestion(index) {
 
     display.innerHTML = `
         <div class="question-card" id="q-${q.id}">
+            <h3>Question ${index + 1} of ${questions.length}</h3>
+            <p>${q.question}</p>
             <div class="options">
                 ${q.options
                     .map(
