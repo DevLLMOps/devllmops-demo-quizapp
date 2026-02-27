@@ -1,0 +1,31 @@
+# Shared base services configuration across compose files.
+#
+# Defines base services that are extended by environment-specific compose files:
+#   - dev (compose.dev.yml)
+#   - prod (compose.prod.yml)
+#   - test (compose.test.yml)
+
+services:
+  quizapp-base:
+    # OCPA-R16: Cross-platform compatibility
+    platform: linux/amd64
+    # OCPA-R10: Logging limits
+    logging:
+      options:
+        max-size: "1m"
+    # OCPA-R17: Exposed ports (internal)
+    expose:
+      - "8000"
+    # OCPA-R19: Port using environment variable
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    # OCPA-R13: Healthcheck
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    # OCPA-R20: In-container environment variables
+    environment:
+      PORT: 8000

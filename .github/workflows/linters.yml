@@ -1,0 +1,72 @@
+name: Linters
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+
+jobs:
+  markdownlint:
+    runs-on: ubuntu-24.04
+    name: markdownlint
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run markdownlint
+        uses: DavidAnson/markdownlint-cli2-action@v19
+        with:
+          globs: "**/*.md"
+
+  gitleaks:
+    runs-on: ubuntu-24.04
+    name: gitleaks
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install gitleaks
+        run: |
+          GITLEAKS_VERSION="8.21.2"
+          wget -qO- "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" | tar xz -C /usr/local/bin gitleaks
+          gitleaks version
+
+      - name: Run gitleaks
+        run: |
+          gitleaks detect --config .gitleaks.toml --source . --no-git --verbose --exit-code 1
+
+  pre-checks:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Python lint (ruff)
+        run: |
+          pip install ruff==0.9.6
+          ruff check app/src/
+
+  check-envs:
+    name: Validate Environment Variables
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run environment variables validation
+        env:
+          SCAN_DIRS: "./scripts,./app"
+        run: |
+          bash scripts/validate-envs.sh
+
+      - name: Upload validation report (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: env-validation-report
+          path: |
+            /tmp/env-*.txt
+          retention-days: 7
+          if-no-files-found: ignore

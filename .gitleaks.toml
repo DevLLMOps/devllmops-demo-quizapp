@@ -1,0 +1,16 @@
+# Gitleaks configuration
+# Uses default rules as base, with project-specific allowlists
+
+[extend]
+useDefault = true
+
+[allowlist]
+paths = [
+    '''node_modules/''',
+    '''.git/''',
+    '''vendor/''',
+    '''.env.example''',
+    '''package-lock.json''',
+    '''yarn.lock''',
+    '''pnpm-lock.yaml''',
+]

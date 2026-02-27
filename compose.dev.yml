@@ -1,0 +1,18 @@
+# Development environment with hot-reload
+# Usage: make dev
+
+services:
+  quizapp:
+    extends:
+      file: compose.base.yml
+      service: quizapp-base
+    build:
+      context: .
+      dockerfile: app/Dockerfile
+      # OCPA-R1: Fixed version target
+      target: dev
+    # OCPA-R14: Restart policy
+    restart: unless-stopped
+    volumes:
+      # Mount source for hot-reload during development
+      - ./app/src:/app:ro
