@@ -20,6 +20,8 @@ function showQuestion(index) {
 
     display.innerHTML = `
         <div class="question-card" id="q-${q.id}">
+            <h3>Question ${index + 1} of ${questions.length}</h3>
+            <p class="question-text">${q.question}</p>
             <div class="options">
                 ${q.options
                     .map(
@@ -53,7 +55,7 @@ function updateUI() {
 
     // Update progress indicator text
     document.getElementById("progress-indicator").textContent =
-        `Question ${current} / ${total}`;
+        `Question ${current} of ${total}`;
 
     // Update progress bar
     const pct = total > 1 ? ((currentIndex) / (total - 1)) * 100 : 100;
@@ -112,14 +114,19 @@ async function submitAnswers() {
     submitBtn.disabled = true;
     submitBtn.textContent = "Checking...";
 
-    const res = await fetch("/api/answers", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ answers }),
-    });
-    const data = await res.json();
-
-    showResults(data);
+    try {
+        const res = await fetch("/api/answers", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ answers }),
+        });
+        const data = await res.json();
+        showResults(data);
+    } catch (error) {
+        alert("Error submitting quiz. Please try again.");
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Submit Answers";
+    }
 }
 
 function showResults(data) {
@@ -160,7 +167,7 @@ function showResults(data) {
         const cardHtml = `
             <div class="question-card result-card">
                 <h3>Question ${idx + 1} of ${data.total}</h3>
-                <p>${q.question}</p>
+                <p class="question-text">${q.question}</p>
                 <div class="options">${optionsHtml}</div>
                 <div class="explanation">${r.explanation}</div>
             </div>
@@ -187,11 +194,15 @@ function restartQuiz() {
 document.addEventListener("keydown", (e) => {
     // Only handle arrow keys when quiz is visible and not in results
     if (document.getElementById("quiz").classList.contains("hidden")) return;
+    
     if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+        e.preventDefault();
         if (currentIndex < questions.length - 1) nextQuestion();
     } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+        e.preventDefault();
         if (currentIndex > 0) prevQuestion();
     }
 });
 
+// Initialize the quiz
 loadQuestions();
