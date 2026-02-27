@@ -12,11 +12,23 @@
             <h1>DevLLMOps Quiz</h1>
             <p class="subtitle">Test your knowledge of AI-native software development</p>
         </header>
-        <div id="quiz"></div>
-        <div id="actions" class="hidden">
-            <button id="submit-btn" onclick="submitAnswers()">Submit Answers</button>
+
+        <div id="carousel" class="hidden">
+            <div class="progress-bar-container">
+                <div class="progress-bar" id="progress-bar"></div>
+            </div>
+            <div class="progress-label" id="progress-label"></div>
+            <div id="quiz"></div>
+            <div id="actions" class="carousel-actions">
+                <button id="prev-btn" onclick="prevQuestion()" disabled>&#8592; Previous</button>
+                <button id="next-btn" onclick="nextQuestion()">Next &#8594;</button>
+                <button id="submit-btn" onclick="submitAnswers()" class="hidden">Submit Answers</button>
+            </div>
         </div>
+
         <div id="results" class="hidden"></div>
+        <div id="results-questions"></div>
+
         <footer>
             <p>Learn more: <a href="https://github.com/flavienbwk/devllmops" target="_blank">DevLLMOps Methodology</a></p>
         </footer>
