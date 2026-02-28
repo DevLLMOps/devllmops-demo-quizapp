@@ -52,6 +52,8 @@ function showQuestion(index) {
 function updateUI() {
     const total = questions.length;
     const current = currentIndex + 1;
+    const currentQuestion = questions[currentIndex];
+    const hasAnswerForCurrentQuestion = currentQuestion && answers[currentQuestion.id] !== undefined;
 
     // Update progress indicator text
     document.getElementById("progress-indicator").textContent =
@@ -65,7 +67,7 @@ function updateUI() {
     const prevBtn = document.getElementById("prev-btn");
     prevBtn.disabled = currentIndex === 0;
 
-    // Update Next / Submit visibility
+    // Update Next / Submit visibility and disabled state
     const nextBtn = document.getElementById("next-btn");
     const submitBtn = document.getElementById("submit-btn");
     const isLast = currentIndex === total - 1;
@@ -73,9 +75,13 @@ function updateUI() {
     if (isLast) {
         nextBtn.classList.add("hidden");
         submitBtn.classList.remove("hidden");
+        // Disable Submit button if current question not answered
+        submitBtn.disabled = !hasAnswerForCurrentQuestion;
     } else {
         nextBtn.classList.remove("hidden");
         submitBtn.classList.add("hidden");
+        // Disable Next button if current question not answered
+        nextBtn.disabled = !hasAnswerForCurrentQuestion;
     }
 }
 
@@ -87,6 +93,9 @@ function selectOption(questionId, optionIndex) {
         el.classList.toggle("selected", i === optionIndex);
         el.querySelector("input").checked = i === optionIndex;
     });
+
+    // Update UI immediately to enable Next/Submit button
+    updateUI();
 }
 
 function prevQuestion() {
@@ -197,7 +206,10 @@ document.addEventListener("keydown", (e) => {
     
     if (e.key === "ArrowRight" || e.key === "ArrowDown") {
         e.preventDefault();
-        if (currentIndex < questions.length - 1) nextQuestion();
+        // Only allow navigation if current question is answered
+        const currentQuestion = questions[currentIndex];
+        const hasAnswer = currentQuestion && answers[currentQuestion.id] !== undefined;
+        if (hasAnswer && currentIndex < questions.length - 1) nextQuestion();
     } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
         e.preventDefault();
         if (currentIndex > 0) prevQuestion();
