@@ -3,7 +3,7 @@
     'use strict';
 
     // Theme constants
-    const THEME_KEY = 'theme-preference';
+    const THEME_KEY = 'theme';
     const THEMES = {
         LIGHT: 'light',
         DARK: 'dark'
