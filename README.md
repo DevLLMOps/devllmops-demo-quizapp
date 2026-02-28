@@ -1,6 +1,10 @@
 # DevLLMOps Demo: Quiz App
 
-> A quiz app about the [DevLLMOps methodology](https://github.com/flavienbwk/devllmops), built following DevLLMOps + [OCPA specs](https://github.com/flavienbwk/ocpa-specs).
+<p align="center">
+  <img src="docs/assets/badge-aigile.svg" alt="AIgile methodology" />
+</p>
+
+> A quiz app about the [DevLLMOps specifications](https://github.com/flavienbwk/devllmops), built following AIgile's methodology + [OCPA specs](https://github.com/flavienbwk/ocpa-specs).
 
 Test your knowledge of AI-native software development: team roles, workflow, tooling, and methodology.
 
