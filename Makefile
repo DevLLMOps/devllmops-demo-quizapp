@@ -43,7 +43,7 @@ prod-restart:
 prod-down:
 	docker compose -f compose.prod.yml down
 
-# Test environment
+# Test environment (API + E2E browser tests via Playwright)
 test:
 	docker compose -f compose.test.yml up --build --abort-on-container-exit --exit-code-from test
 	docker compose -f compose.test.yml down

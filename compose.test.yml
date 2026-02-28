@@ -1,4 +1,4 @@
-# Test stack tailored for exiting 0 on succeeding tests and non-0 on failing ones
+# Test stack — API + E2E browser tests via Playwright
 # Usage: "make test"
 
 services:
@@ -14,36 +14,15 @@ services:
     restart: "no"
 
   test:
-    # OCPA-R1: Fixed version
-    image: curlimages/curl:8.11.0
+    build:
+      context: ./tests/e2e
+      dockerfile: Dockerfile
     # OCPA-R16: Cross-platform compatibility
     platform: linux/amd64
     depends_on:
       quizapp:
         condition: service_healthy
-    command:
-      - sh
-      - -c
-      - |
-        echo "Running tests..."
-        echo ""
-        echo "Test 1: Check server responds"
-        curl -sf http://quizapp:8000/health > /dev/null || { echo "FAIL: Server not responding"; exit 1; }
-        echo "PASS: Server responds"
-        echo ""
-        echo "Test 2: Check health endpoint returns ok"
-        curl -sf http://quizapp:8000/health | grep -q '"ok"' || { echo "FAIL: Health check failed"; exit 1; }
-        echo "PASS: Health endpoint ok"
-        echo ""
-        echo "Test 3: Check questions API returns questions"
-        curl -sf http://quizapp:8000/api/questions | grep -q '"questions"' || { echo "FAIL: Questions API failed"; exit 1; }
-        echo "PASS: Questions API works"
-        echo ""
-        echo "Test 4: Check answer submission works"
-        RESULT=$$(curl -sf -X POST http://quizapp:8000/api/answers -H "Content-Type: application/json" -d '{"answers":{"1":0,"2":2,"3":3,"4":2,"5":1,"6":2,"7":2,"8":2,"9":1,"10":3}}')
-        echo "$$RESULT" | grep -q '"percentage":100' || { echo "FAIL: Perfect score not returned for correct answers"; exit 1; }
-        echo "PASS: Answer submission works (100% score for correct answers)"
-        echo ""
-        echo "================================"
-        echo "All tests passed!"
-        echo "================================"
+    # OCPA-R10: Logging limits
+    logging:
+      options:
+        max-size: "1m"

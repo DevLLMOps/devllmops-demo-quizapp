@@ -29,7 +29,9 @@ A quiz web application that tests knowledge of the DevLLMOps methodology. Built 
 ├── compose.base.yml       # Shared service config (ports, healthcheck, logging)
 ├── compose.dev.yml        # Dev: hot-reload via volume mounts
 ├── compose.prod.yml       # Prod: static files baked into image
-├── compose.test.yml       # Integration tests via curl
+├── compose.test.yml       # API + E2E tests via Playwright
+├── tests/
+│   └── e2e/               # Playwright test specs + Dockerfile
 └── Makefile               # Standardized commands (make dev, make test, etc.)
 ```
 
@@ -64,7 +66,7 @@ When creating PRs or issues, tag the appropriate reviewer based on their review 
 
 ```bash
 make dev         # Start dev environment with hot reload
-make test        # Run integration tests
+make test        # Run API tests (curl) + E2E tests (Playwright)
 make prod        # Start production environment
 make down        # Stop all services
 ```
