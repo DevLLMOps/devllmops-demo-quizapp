@@ -223,10 +223,20 @@ h1 {
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-#next-btn:hover, #submit-btn:hover:not(:disabled) {
+#next-btn:hover:not(:disabled), #submit-btn:hover:not(:disabled) {
     background: linear-gradient(135deg, #388bfd, #46b955);
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(31, 111, 235, 0.3);
+}
+
+#next-btn:disabled {
+    background: #21262d;
+    color: #484f58;
+    cursor: not-allowed;
+    border-color: #30363d;
+    opacity: 0.6;
+    transform: none;
+    box-shadow: none;
 }
 
 #submit-btn {
