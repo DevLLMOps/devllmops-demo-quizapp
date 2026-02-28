@@ -13,6 +13,9 @@ REPO="${2:?ERROR: Repository required (e.g., myorg/myrepo)}"
 TAG="${3:?ERROR: Tag required (e.g., develop, latest)}"
 SHA_TAG="${4:-}"
 
+# Convert repository to lowercase for OCI compliance
+REPO=$(echo "$REPO" | tr '[:upper:]' '[:lower:]')
+
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 COMPOSE_FILE="$PROJECT_DIR/compose.prod.yml"
