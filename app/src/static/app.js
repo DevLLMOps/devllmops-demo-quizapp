@@ -94,18 +94,40 @@ function selectOption(questionId, optionIndex) {
         el.querySelector("input").checked = i === optionIndex;
     });
 
+    // Add selecting animation class to the chosen option
+    const selectedOption = document.getElementById(`q${questionId}-opt${optionIndex}`);
+    if (selectedOption) {
+        // Remove any existing animation class first
+        selectedOption.classList.remove("selecting");
+        
+        // Force a reflow to restart the animation
+        selectedOption.offsetHeight;
+        
+        // Add the animation class
+        selectedOption.classList.add("selecting");
+        
+        // Remove the animation class after it completes
+        setTimeout(() => {
+            selectedOption.classList.remove("selecting");
+        }, 400);
+    }
+
     // Update UI immediately to enable Next/Submit button
     updateUI();
 }
 
 function prevQuestion() {
     if (currentIndex > 0) {
+        // Add button click animation
+        addButtonClickAnimation("prev-btn");
         showQuestion(currentIndex - 1);
     }
 }
 
 function nextQuestion() {
     if (currentIndex < questions.length - 1) {
+        // Add button click animation
+        addButtonClickAnimation("next-btn");
         showQuestion(currentIndex + 1);
     }
 }
@@ -122,6 +144,9 @@ async function submitAnswers() {
     const submitBtn = document.getElementById("submit-btn");
     submitBtn.disabled = true;
     submitBtn.textContent = "Checking...";
+
+    // Add button click animation
+    addButtonClickAnimation("submit-btn");
 
     try {
         const res = await fetch("/api/answers", {
@@ -189,6 +214,12 @@ function restartQuiz() {
     answers = {};
     currentIndex = 0;
 
+    // Add button click animation
+    const restartBtn = document.querySelector(".restart-btn");
+    if (restartBtn) {
+        addButtonClickAnimation(null, restartBtn);
+    }
+
     document.getElementById("results").classList.add("hidden");
     document.getElementById("quiz").classList.remove("hidden");
 
@@ -197,6 +228,26 @@ function restartQuiz() {
     submitBtn.textContent = "Submit Answers";
 
     showQuestion(0);
+}
+
+// Helper function to add click animation to buttons
+function addButtonClickAnimation(buttonId, buttonElement = null) {
+    const button = buttonElement || (buttonId ? document.getElementById(buttonId) : null);
+    if (!button || button.disabled) return;
+
+    // Remove existing animation class
+    button.classList.remove("clicked");
+    
+    // Force a reflow to restart the animation
+    button.offsetHeight;
+    
+    // Add the animation class
+    button.classList.add("clicked");
+    
+    // Remove the animation class after it completes
+    setTimeout(() => {
+        button.classList.remove("clicked");
+    }, 400);
 }
 
 // Keyboard navigation support
