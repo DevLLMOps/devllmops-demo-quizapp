@@ -1,220 +1,361 @@
-let questions = [];
-let currentIndex = 0;
-let answers = {}; // { questionId: optionIndex }
-
-async function loadQuestions() {
-    const res = await fetch("/api/questions");
-    const data = await res.json();
-    questions = data.questions;
-    if (questions.length > 0) {
-        showQuestion(0);
+class QuizApp {
+    constructor() {
+        this.questions = [];
+        this.currentQuestion = 0;
+        this.userAnswers = {};
+        this.init();
     }
-}
 
-function showQuestion(index) {
-    if (index < 0 || index >= questions.length) return;
-    currentIndex = index;
+    async init() {
+        try {
+            await this.loadQuestions();
+            this.setupEventListeners();
+            this.displayQuestion();
+            this.updateProgress();
+        } catch (error) {
+            console.error('Failed to initialize quiz:', error);
+            this.showError('Failed to load quiz questions. Please refresh the page.');
+        }
+    }
 
-    const q = questions[index];
-    const display = document.getElementById("question-display");
+    async loadQuestions() {
+        const response = await fetch('/api/questions');
+        if (!response.ok) {
+            throw new Error('Failed to fetch questions');
+        }
+        const data = await response.json();
+        this.questions = data.questions;
+    }
 
-    display.innerHTML = `
-        <div class="question-card" id="q-${q.id}">
-            <h3>Question ${index + 1} of ${questions.length}</h3>
-            <p class="question-text">${q.question}</p>
-            <div class="options">
-                ${q.options
-                    .map(
-                        (opt, oi) => `
-                    <div class="option" id="q${q.id}-opt${oi}" onclick="selectOption(${q.id}, ${oi})">
-                        <input type="radio" name="q${q.id}" id="q${q.id}-o${oi}" value="${oi}"
-                            ${answers[q.id] === oi ? "checked" : ""}>
-                        <label for="q${q.id}-o${oi}">${opt}</label>
-                    </div>
-                `
-                    )
-                    .join("")}
+    setupEventListeners() {
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const submitBtn = document.getElementById('submit-btn');
+
+        if (prevBtn) prevBtn.addEventListener('click', () => this.prevQuestion());
+        if (nextBtn) nextBtn.addEventListener('click', () => this.nextQuestion());
+        if (submitBtn) submitBtn.addEventListener('click', () => this.submitAnswers());
+    }
+
+    displayQuestion() {
+        const questionDisplay = document.getElementById('question-display');
+        const question = this.questions[this.currentQuestion];
+        
+        if (!question || !questionDisplay) return;
+
+        const choicesHtml = question.choices.map((choice, index) => {
+            const isSelected = this.userAnswers[question.id] === index;
+            return `
+                <div class="choice ${isSelected ? 'selected' : ''}" 
+                     data-question-id="${question.id}" 
+                     data-choice-index="${index}"
+                     tabindex="0"
+                     role="radio"
+                     aria-checked="${isSelected}">
+                    ${choice}
+                </div>
+            `;
+        }).join('');
+
+        questionDisplay.innerHTML = `
+            <div class="question" role="group" aria-labelledby="question-${question.id}">
+                <h2 id="question-${question.id}">${question.question}</h2>
+                <div class="choices" role="radiogroup" aria-labelledby="question-${question.id}">
+                    ${choicesHtml}
+                </div>
             </div>
-        </div>
-    `;
+        `;
 
-    // Restore previously selected answer styling
-    if (answers[q.id] !== undefined) {
-        const card = document.getElementById(`q-${q.id}`);
-        card.querySelectorAll(".option").forEach((el, i) => {
-            el.classList.toggle("selected", i === answers[q.id]);
+        this.attachChoiceListeners();
+        this.updateNavigationButtons();
+        
+        // Focus the question for screen readers
+        const questionElement = document.getElementById(`question-${question.id}`);
+        if (questionElement) {
+            questionElement.focus();
+        }
+    }
+
+    attachChoiceListeners() {
+        const choices = document.querySelectorAll('.choice');
+        choices.forEach(choice => {
+            // Mouse/touch events
+            choice.addEventListener('click', (e) => this.selectChoice(e));
+            
+            // Keyboard events
+            choice.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    this.selectChoice(e);
+                }
+            });
         });
     }
 
-    updateUI();
-}
+    selectChoice(event) {
+        const choice = event.currentTarget;
+        const questionId = parseInt(choice.dataset.questionId);
+        const choiceIndex = parseInt(choice.dataset.choiceIndex);
 
-function updateUI() {
-    const total = questions.length;
-    const current = currentIndex + 1;
-    const currentQuestion = questions[currentIndex];
-    const hasAnswerForCurrentQuestion = currentQuestion && answers[currentQuestion.id] !== undefined;
+        // Remove selected class from all choices for this question
+        const allChoices = document.querySelectorAll(`[data-question-id="${questionId}"]`);
+        allChoices.forEach(c => {
+            c.classList.remove('selected');
+            c.setAttribute('aria-checked', 'false');
+        });
 
-    // Update progress indicator text
-    document.getElementById("progress-indicator").textContent =
-        `Question ${current} of ${total}`;
+        // Add selected class to clicked choice with animation
+        choice.classList.add('selected');
+        choice.setAttribute('aria-checked', 'true');
 
-    // Update progress bar
-    const pct = total > 1 ? ((currentIndex) / (total - 1)) * 100 : 100;
-    document.getElementById("progress-bar").style.width = pct + "%";
+        // Store the answer
+        this.userAnswers[questionId] = choiceIndex;
 
-    // Update Previous button
-    const prevBtn = document.getElementById("prev-btn");
-    prevBtn.disabled = currentIndex === 0;
+        // Add a subtle feedback animation
+        if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            choice.style.transform = 'scale(1.05)';
+            setTimeout(() => {
+                choice.style.transform = '';
+            }, 150);
+        }
 
-    // Update Next / Submit visibility and disabled state
-    const nextBtn = document.getElementById("next-btn");
-    const submitBtn = document.getElementById("submit-btn");
-    const isLast = currentIndex === total - 1;
+        this.updateNavigationButtons();
+    }
 
-    if (isLast) {
-        nextBtn.classList.add("hidden");
-        submitBtn.classList.remove("hidden");
-        // Disable Submit button if current question not answered
-        submitBtn.disabled = !hasAnswerForCurrentQuestion;
-    } else {
-        nextBtn.classList.remove("hidden");
-        submitBtn.classList.add("hidden");
-        // Disable Next button if current question not answered
-        nextBtn.disabled = !hasAnswerForCurrentQuestion;
+    updateNavigationButtons() {
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const submitBtn = document.getElementById('submit-btn');
+
+        if (!prevBtn || !nextBtn || !submitBtn) return;
+
+        // Update previous button
+        prevBtn.disabled = this.currentQuestion === 0;
+
+        // Update next/submit buttons
+        const isLastQuestion = this.currentQuestion === this.questions.length - 1;
+        
+        if (isLastQuestion) {
+            nextBtn.classList.add('hidden');
+            submitBtn.classList.remove('hidden');
+        } else {
+            nextBtn.classList.remove('hidden');
+            submitBtn.classList.add('hidden');
+        }
+
+        // Enable/disable based on whether current question is answered
+        const currentQuestionId = this.questions[this.currentQuestion]?.id;
+        const isAnswered = this.userAnswers.hasOwnProperty(currentQuestionId);
+        
+        if (isLastQuestion) {
+            submitBtn.disabled = !this.allQuestionsAnswered();
+        } else {
+            nextBtn.disabled = !isAnswered;
+        }
+    }
+
+    allQuestionsAnswered() {
+        return this.questions.every(q => this.userAnswers.hasOwnProperty(q.id));
+    }
+
+    nextQuestion() {
+        if (this.currentQuestion < this.questions.length - 1) {
+            this.currentQuestion++;
+            this.displayQuestion();
+            this.updateProgress();
+        }
+    }
+
+    prevQuestion() {
+        if (this.currentQuestion > 0) {
+            this.currentQuestion--;
+            this.displayQuestion();
+            this.updateProgress();
+        }
+    }
+
+    updateProgress() {
+        const progressBar = document.getElementById('progress-bar');
+        const progressIndicator = document.getElementById('progress-indicator');
+        
+        if (progressBar && progressIndicator) {
+            const progress = ((this.currentQuestion + 1) / this.questions.length) * 100;
+            progressBar.style.width = `${progress}%`;
+            progressIndicator.textContent = `Question ${this.currentQuestion + 1} / ${this.questions.length}`;
+        }
+    }
+
+    async submitAnswers() {
+        if (!this.allQuestionsAnswered()) {
+            alert('Please answer all questions before submitting.');
+            return;
+        }
+
+        const submitBtn = document.getElementById('submit-btn');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Submitting...';
+            
+            // Add submission animation
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                submitBtn.style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                    submitBtn.style.transform = '';
+                }, 150);
+            }
+        }
+
+        try {
+            const response = await fetch('/api/answers', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ answers: this.userAnswers }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to submit answers');
+            }
+
+            const results = await response.json();
+            this.showResults(results);
+        } catch (error) {
+            console.error('Failed to submit answers:', error);
+            this.showError('Failed to submit answers. Please try again.');
+            
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit Answers';
+            }
+        }
+    }
+
+    showResults(results) {
+        const quizContainer = document.getElementById('quiz');
+        const resultsContainer = document.getElementById('results');
+        
+        if (!quizContainer || !resultsContainer) return;
+
+        quizContainer.classList.add('hidden');
+        resultsContainer.classList.remove('hidden');
+
+        const scoreClass = this.getScoreClass(results.percentage);
+        const resultDetails = this.generateResultDetails(results);
+
+        resultsContainer.innerHTML = `
+            <h2>Quiz Results</h2>
+            <div class="score ${scoreClass}">
+                ${results.score} / ${results.total}
+                <div style="font-size: 0.7em; margin-top: 0.5rem;">
+                    ${results.percentage}%
+                </div>
+            </div>
+            <p>${this.getScoreMessage(results.percentage)}</p>
+            ${resultDetails}
+            <button onclick="location.reload()" style="margin-top: 2rem;">
+                Take Quiz Again
+            </button>
+        `;
+
+        // Focus on results for accessibility
+        resultsContainer.focus();
+        resultsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    getScoreClass(percentage) {
+        if (percentage >= 80) return 'high';
+        if (percentage >= 60) return 'medium';
+        return 'low';
+    }
+
+    getScoreMessage(percentage) {
+        if (percentage >= 90) return 'Excellent! You have a great understanding of DevLLMOps.';
+        if (percentage >= 80) return 'Good job! You have a solid grasp of DevLLMOps concepts.';
+        if (percentage >= 70) return 'Not bad! You might want to review some DevLLMOps principles.';
+        if (percentage >= 60) return 'You\'re getting there. Consider learning more about DevLLMOps.';
+        return 'Keep studying! There\'s more to learn about DevLLMOps methodology.';
+    }
+
+    generateResultDetails(results) {
+        if (!results.details || results.details.length === 0) {
+            return '';
+        }
+
+        const detailsHtml = results.details.map(detail => {
+            const isCorrect = detail.correct;
+            const question = this.questions.find(q => q.id === detail.question_id);
+            
+            if (!question) return '';
+
+            return `
+                <div class="result-item ${isCorrect ? 'correct' : 'incorrect'}">
+                    <div class="result-question">${question.question}</div>
+                    <div class="result-answer">
+                        Your answer: <span class="${isCorrect ? 'correct-answer' : 'incorrect-answer'}">
+                            ${question.choices[detail.user_answer]}
+                        </span>
+                    </div>
+                    ${!isCorrect ? `
+                        <div class="result-answer">
+                            Correct answer: <span class="correct-answer">
+                                ${question.choices[detail.correct_answer]}
+                            </span>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }).join('');
+
+        return `
+            <div class="results-details">
+                <h3 style="margin-bottom: 1rem;">Question Breakdown</h3>
+                ${detailsHtml}
+            </div>
+        `;
+    }
+
+    showError(message) {
+        const errorContainer = document.createElement('div');
+        errorContainer.style.cssText = `
+            background: #fee2e2;
+            border: 1px solid #fecaca;
+            color: #b91c1c;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin: 1rem 0;
+            text-align: center;
+        `;
+        errorContainer.textContent = message;
+
+        const container = document.querySelector('.container');
+        if (container) {
+            container.insertBefore(errorContainer, container.firstChild);
+            
+            // Remove error after 5 seconds
+            setTimeout(() => {
+                errorContainer.remove();
+            }, 5000);
+        }
     }
 }
 
-function selectOption(questionId, optionIndex) {
-    answers[questionId] = optionIndex;
+// Global functions for button onclick handlers (backwards compatibility)
+let quizApp;
 
-    const card = document.getElementById(`q-${questionId}`);
-    card.querySelectorAll(".option").forEach((el, i) => {
-        el.classList.toggle("selected", i === optionIndex);
-        el.querySelector("input").checked = i === optionIndex;
-    });
-
-    // Update UI immediately to enable Next/Submit button
-    updateUI();
+function nextQuestion() {
+    if (quizApp) quizApp.nextQuestion();
 }
 
 function prevQuestion() {
-    if (currentIndex > 0) {
-        showQuestion(currentIndex - 1);
-    }
+    if (quizApp) quizApp.prevQuestion();
 }
 
-function nextQuestion() {
-    if (currentIndex < questions.length - 1) {
-        showQuestion(currentIndex + 1);
-    }
+function submitAnswers() {
+    if (quizApp) quizApp.submitAnswers();
 }
 
-async function submitAnswers() {
-    if (Object.keys(answers).length < questions.length) {
-        const unanswered = questions.filter(q => answers[q.id] === undefined);
-        const firstUnanswered = questions.indexOf(unanswered[0]);
-        alert(`Please answer all questions before submitting. You have ${unanswered.length} unanswered question(s).`);
-        showQuestion(firstUnanswered);
-        return;
-    }
-
-    const submitBtn = document.getElementById("submit-btn");
-    submitBtn.disabled = true;
-    submitBtn.textContent = "Checking...";
-
-    try {
-        const res = await fetch("/api/answers", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ answers }),
-        });
-        const data = await res.json();
-        showResults(data);
-    } catch (error) {
-        alert("Error submitting quiz. Please try again.");
-        submitBtn.disabled = false;
-        submitBtn.textContent = "Submit Answers";
-    }
-}
-
-function showResults(data) {
-    const level =
-        data.percentage >= 80 ? "high" : data.percentage >= 50 ? "medium" : "low";
-
-    // Hide carousel
-    document.getElementById("quiz").classList.add("hidden");
-
-    const resultsDiv = document.getElementById("results");
-    resultsDiv.innerHTML = `
-        <div class="score ${level}">${data.percentage}%</div>
-        <p class="score-text">${data.score} out of ${data.total} correct</p>
-        <div id="results-questions"></div>
-        <button class="restart-btn" onclick="restartQuiz()">Try Again</button>
-    `;
-    resultsDiv.classList.remove("hidden");
-
-    const resultsQuestions = document.getElementById("results-questions");
-    data.results.forEach((r, idx) => {
-        const q = questions.find(q => q.id === r.id);
-        if (!q) return;
-
-        const optionsHtml = q.options
-            .map((opt, i) => {
-                let cls = "option";
-                if (i === r.correct_answer) cls += " correct";
-                else if (i === r.selected && !r.correct) cls += " wrong";
-                return `
-                    <div class="${cls}" style="cursor:default;">
-                        <input type="radio" ${i === r.selected ? "checked" : ""} disabled>
-                        <label>${opt}</label>
-                    </div>
-                `;
-            })
-            .join("");
-
-        const cardHtml = `
-            <div class="question-card result-card">
-                <h3>Question ${idx + 1} of ${data.total}</h3>
-                <p class="question-text">${q.question}</p>
-                <div class="options">${optionsHtml}</div>
-                <div class="explanation">${r.explanation}</div>
-            </div>
-        `;
-        resultsQuestions.insertAdjacentHTML("beforeend", cardHtml);
-    });
-}
-
-function restartQuiz() {
-    answers = {};
-    currentIndex = 0;
-
-    document.getElementById("results").classList.add("hidden");
-    document.getElementById("quiz").classList.remove("hidden");
-
-    const submitBtn = document.getElementById("submit-btn");
-    submitBtn.disabled = false;
-    submitBtn.textContent = "Submit Answers";
-
-    showQuestion(0);
-}
-
-// Keyboard navigation support
-document.addEventListener("keydown", (e) => {
-    // Only handle arrow keys when quiz is visible and not in results
-    if (document.getElementById("quiz").classList.contains("hidden")) return;
-    
-    if (e.key === "ArrowRight" || e.key === "ArrowDown") {
-        e.preventDefault();
-        // Only allow navigation if current question is answered
-        const currentQuestion = questions[currentIndex];
-        const hasAnswer = currentQuestion && answers[currentQuestion.id] !== undefined;
-        if (hasAnswer && currentIndex < questions.length - 1) nextQuestion();
-    } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
-        e.preventDefault();
-        if (currentIndex > 0) prevQuestion();
-    }
+// Initialize quiz when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    quizApp = new QuizApp();
 });
-
-// Initialize the quiz
-loadQuestions();
