@@ -69,6 +69,49 @@ html.dark {
     --shadow-focus: rgba(88, 166, 255, 0.2);
 }
 
+/* Animation keyframes for buttons and interactions */
+@media (prefers-reduced-motion: no-preference) {
+    @keyframes buttonPress {
+        0% { transform: translateY(0) scale(1); }
+        50% { transform: translateY(1px) scale(0.98); }
+        100% { transform: translateY(0) scale(1); }
+    }
+
+    @keyframes choiceSelect {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.02); }
+        100% { transform: scale(1); }
+    }
+
+    @keyframes choiceGlow {
+        0% { box-shadow: 0 0 0 2px transparent; }
+        50% { box-shadow: 0 0 0 4px var(--shadow-focus); }
+        100% { box-shadow: 0 0 0 2px var(--shadow-focus); }
+    }
+
+    @keyframes pulseGlow {
+        0% { box-shadow: 0 0 0 0 var(--shadow-focus); }
+        70% { box-shadow: 0 0 0 6px rgba(9, 105, 218, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(9, 105, 218, 0); }
+    }
+
+    /* Button press animations */
+    .btn-press-animate:active {
+        animation: buttonPress 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Choice selection animations */
+    .option-select-animate {
+        animation: choiceSelect 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+                   choiceGlow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Pulse effect for primary buttons */
+    .btn-pulse-animate:hover:not(:disabled) {
+        animation: pulseGlow 1.5s infinite;
+    }
+}
+
 * {
     margin: 0;
     padding: 0;
