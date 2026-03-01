@@ -69,6 +69,33 @@ html.dark {
     --shadow-focus: rgba(88, 166, 255, 0.2);
 }
 
+/* Animation keyframes for enhanced interactions */
+@media (prefers-reduced-motion: no-preference) {
+    @keyframes buttonPress {
+        0% { transform: scale(1); }
+        50% { transform: scale(0.96); }
+        100% { transform: scale(1); }
+    }
+
+    @keyframes choiceSelect {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.02); }
+        100% { transform: scale(1); }
+    }
+
+    @keyframes pulseGlow {
+        0% { box-shadow: 0 0 0 0 var(--shadow-focus); }
+        50% { box-shadow: 0 0 0 4px var(--shadow-focus); }
+        100% { box-shadow: 0 0 0 0 var(--shadow-focus); }
+    }
+
+    @keyframes subtleBounce {
+        0%, 100% { transform: scale(1); }
+        25% { transform: scale(1.01); }
+        75% { transform: scale(0.99); }
+    }
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -122,6 +149,12 @@ body {
     border-color: var(--border-hover);
     transform: translateY(-1px);
     box-shadow: 0 2px 4px var(--shadow-hover);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .theme-toggle:active {
+        animation: buttonPress 0.15s ease-out;
+    }
 }
 
 .theme-toggle:focus {
@@ -248,10 +281,26 @@ h1 {
     box-shadow: 0 2px 4px var(--shadow-hover);
 }
 
+@media (prefers-reduced-motion: no-preference) {
+    .option:active {
+        transform: scale(0.98) translateY(-1px);
+    }
+}
+
 .option.selected {
     border-color: var(--border-selected);
     background: var(--bg-option-selected);
     box-shadow: 0 0 0 2px var(--shadow-focus);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .option.selected {
+        animation: choiceSelect 0.3s ease-out;
+    }
+
+    .option.selecting {
+        animation: subtleBounce 0.4s ease-out;
+    }
 }
 
 .option.correct {
@@ -326,6 +375,16 @@ html:not(.dark) .option.wrong {
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .navigation-controls button:active:not(:disabled) {
+        animation: buttonPress 0.15s ease-out;
+    }
+
+    .navigation-controls button.clicked:not(:disabled) {
+        animation: pulseGlow 0.4s ease-out;
+    }
 }
 
 #prev-btn {
@@ -469,6 +528,12 @@ html.dark #submit-btn:hover:not(:disabled) {
     box-shadow: 0 4px 8px var(--shadow-primary);
 }
 
+@media (prefers-reduced-motion: no-preference) {
+    .restart-btn:active {
+        animation: buttonPress 0.15s ease-out;
+    }
+}
+
 .hidden {
     display: none !important;
 }
@@ -557,4 +622,13 @@ button:focus {
 .loading {
     opacity: 0.7;
     pointer-events: none;
+}
+
+/* Reduced motion fallback - instant animations */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
 }
