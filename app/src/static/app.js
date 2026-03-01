@@ -1,220 +1,216 @@
+let currentQuestion = 0;
 let questions = [];
-let currentIndex = 0;
-let answers = {}; // { questionId: optionIndex }
+let answers = {};
+
+// Load questions when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    loadQuestions();
+});
 
 async function loadQuestions() {
-    const res = await fetch("/api/questions");
-    const data = await res.json();
-    questions = data.questions;
-    if (questions.length > 0) {
-        showQuestion(0);
+    try {
+        const response = await fetch('/api/questions');
+        const data = await response.json();
+        questions = data.questions;
+        displayQuestion();
+    } catch (error) {
+        console.error('Error loading questions:', error);
+        document.getElementById('question-display').innerHTML = 
+            '<p class="error">Error loading questions. Please refresh the page.</p>';
     }
 }
 
-function showQuestion(index) {
-    if (index < 0 || index >= questions.length) return;
-    currentIndex = index;
-
-    const q = questions[index];
-    const display = document.getElementById("question-display");
-
-    display.innerHTML = `
-        <div class="question-card" id="q-${q.id}">
-            <h3>Question ${index + 1} of ${questions.length}</h3>
-            <p class="question-text">${q.question}</p>
-            <div class="options">
-                ${q.options
-                    .map(
-                        (opt, oi) => `
-                    <div class="option" id="q${q.id}-opt${oi}" onclick="selectOption(${q.id}, ${oi})">
-                        <input type="radio" name="q${q.id}" id="q${q.id}-o${oi}" value="${oi}"
-                            ${answers[q.id] === oi ? "checked" : ""}>
-                        <label for="q${q.id}-o${oi}">${opt}</label>
-                    </div>
-                `
-                    )
-                    .join("")}
+function displayQuestion() {
+    const questionContainer = document.getElementById('question-display');
+    const question = questions[currentQuestion];
+    
+    if (!question) return;
+    
+    const choicesHtml = question.options.map((option, index) => {
+        const isSelected = answers[question.id] === index;
+        return `
+            <div class="choice ${isSelected ? 'selected' : ''}" 
+                 onclick="selectChoice(${question.id}, ${index})"
+                 tabindex="0" 
+                 role="button" 
+                 aria-pressed="${isSelected}">
+                <input type="radio" name="q${question.id}" value="${index}" ${isSelected ? 'checked' : ''}>
+                ${option}
+            </div>
+        `;
+    }).join('');
+    
+    questionContainer.innerHTML = `
+        <div class="question">
+            <h2>Q${currentQuestion + 1}: ${question.question}</h2>
+            <div class="choices">
+                ${choicesHtml}
             </div>
         </div>
     `;
-
-    // Restore previously selected answer styling
-    if (answers[q.id] !== undefined) {
-        const card = document.getElementById(`q-${q.id}`);
-        card.querySelectorAll(".option").forEach((el, i) => {
-            el.classList.toggle("selected", i === answers[q.id]);
+    
+    updateProgress();
+    updateNavigationButtons();
+    
+    // Add keyboard support for choices
+    const choices = questionContainer.querySelectorAll('.choice');
+    choices.forEach(choice => {
+        choice.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                choice.click();
+            }
         });
-    }
-
-    updateUI();
-}
-
-function updateUI() {
-    const total = questions.length;
-    const current = currentIndex + 1;
-    const currentQuestion = questions[currentIndex];
-    const hasAnswerForCurrentQuestion = currentQuestion && answers[currentQuestion.id] !== undefined;
-
-    // Update progress indicator text
-    document.getElementById("progress-indicator").textContent =
-        `Question ${current} of ${total}`;
-
-    // Update progress bar
-    const pct = total > 1 ? ((currentIndex) / (total - 1)) * 100 : 100;
-    document.getElementById("progress-bar").style.width = pct + "%";
-
-    // Update Previous button
-    const prevBtn = document.getElementById("prev-btn");
-    prevBtn.disabled = currentIndex === 0;
-
-    // Update Next / Submit visibility and disabled state
-    const nextBtn = document.getElementById("next-btn");
-    const submitBtn = document.getElementById("submit-btn");
-    const isLast = currentIndex === total - 1;
-
-    if (isLast) {
-        nextBtn.classList.add("hidden");
-        submitBtn.classList.remove("hidden");
-        // Disable Submit button if current question not answered
-        submitBtn.disabled = !hasAnswerForCurrentQuestion;
-    } else {
-        nextBtn.classList.remove("hidden");
-        submitBtn.classList.add("hidden");
-        // Disable Next button if current question not answered
-        nextBtn.disabled = !hasAnswerForCurrentQuestion;
-    }
-}
-
-function selectOption(questionId, optionIndex) {
-    answers[questionId] = optionIndex;
-
-    const card = document.getElementById(`q-${questionId}`);
-    card.querySelectorAll(".option").forEach((el, i) => {
-        el.classList.toggle("selected", i === optionIndex);
-        el.querySelector("input").checked = i === optionIndex;
     });
-
-    // Update UI immediately to enable Next/Submit button
-    updateUI();
 }
 
-function prevQuestion() {
-    if (currentIndex > 0) {
-        showQuestion(currentIndex - 1);
+function selectChoice(questionId, optionIndex) {
+    // Add selection animation class
+    const clickedChoice = event.currentTarget;
+    
+    // Remove animation class from all choices first
+    document.querySelectorAll('.choice').forEach(choice => {
+        choice.classList.remove('selecting');
+    });
+    
+    // Apply selection animation if motion is allowed
+    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        clickedChoice.classList.add('selecting');
+        
+        // Remove animation class after animation completes
+        setTimeout(() => {
+            clickedChoice.classList.remove('selecting');
+        }, 300);
     }
+    
+    // Update answer
+    answers[questionId] = optionIndex;
+    
+    // Update visual selection
+    document.querySelectorAll('.choice').forEach((choice, index) => {
+        choice.classList.toggle('selected', index === optionIndex);
+        choice.setAttribute('aria-pressed', index === optionIndex);
+        const radio = choice.querySelector('input[type="radio"]');
+        if (radio) radio.checked = index === optionIndex;
+    });
+    
+    updateNavigationButtons();
 }
 
 function nextQuestion() {
-    if (currentIndex < questions.length - 1) {
-        showQuestion(currentIndex + 1);
+    if (currentQuestion < questions.length - 1) {
+        currentQuestion++;
+        displayQuestion();
+    }
+}
+
+function prevQuestion() {
+    if (currentQuestion > 0) {
+        currentQuestion--;
+        displayQuestion();
+    }
+}
+
+function updateProgress() {
+    const progressBar = document.getElementById('progress-bar');
+    const progressIndicator = document.getElementById('progress-indicator');
+    
+    const progress = ((currentQuestion + 1) / questions.length) * 100;
+    progressBar.style.width = progress + '%';
+    progressIndicator.textContent = `Question ${currentQuestion + 1} / ${questions.length}`;
+}
+
+function updateNavigationButtons() {
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
+    const submitBtn = document.getElementById('submit-btn');
+    
+    prevBtn.disabled = currentQuestion === 0;
+    
+    const isLastQuestion = currentQuestion === questions.length - 1;
+    const currentAnswered = answers.hasOwnProperty(questions[currentQuestion].id);
+    
+    if (isLastQuestion) {
+        nextBtn.classList.add('hidden');
+        submitBtn.classList.remove('hidden');
+        submitBtn.disabled = !currentAnswered;
+    } else {
+        nextBtn.classList.remove('hidden');
+        submitBtn.classList.add('hidden');
+        nextBtn.disabled = !currentAnswered;
     }
 }
 
 async function submitAnswers() {
-    if (Object.keys(answers).length < questions.length) {
-        const unanswered = questions.filter(q => answers[q.id] === undefined);
-        const firstUnanswered = questions.indexOf(unanswered[0]);
-        alert(`Please answer all questions before submitting. You have ${unanswered.length} unanswered question(s).`);
-        showQuestion(firstUnanswered);
-        return;
-    }
-
-    const submitBtn = document.getElementById("submit-btn");
-    submitBtn.disabled = true;
-    submitBtn.textContent = "Checking...";
-
     try {
-        const res = await fetch("/api/answers", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ answers }),
+        const response = await fetch('/api/answers', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ answers: answers })
         });
-        const data = await res.json();
-        showResults(data);
+        
+        const results = await response.json();
+        displayResults(results);
     } catch (error) {
-        alert("Error submitting quiz. Please try again.");
-        submitBtn.disabled = false;
-        submitBtn.textContent = "Submit Answers";
+        console.error('Error submitting answers:', error);
+        alert('Error submitting answers. Please try again.');
     }
 }
 
-function showResults(data) {
-    const level =
-        data.percentage >= 80 ? "high" : data.percentage >= 50 ? "medium" : "low";
-
-    // Hide carousel
-    document.getElementById("quiz").classList.add("hidden");
-
-    const resultsDiv = document.getElementById("results");
-    resultsDiv.innerHTML = `
-        <div class="score ${level}">${data.percentage}%</div>
-        <p class="score-text">${data.score} out of ${data.total} correct</p>
-        <div id="results-questions"></div>
-        <button class="restart-btn" onclick="restartQuiz()">Try Again</button>
-    `;
-    resultsDiv.classList.remove("hidden");
-
-    const resultsQuestions = document.getElementById("results-questions");
-    data.results.forEach((r, idx) => {
-        const q = questions.find(q => q.id === r.id);
-        if (!q) return;
-
-        const optionsHtml = q.options
-            .map((opt, i) => {
-                let cls = "option";
-                if (i === r.correct_answer) cls += " correct";
-                else if (i === r.selected && !r.correct) cls += " wrong";
-                return `
-                    <div class="${cls}" style="cursor:default;">
-                        <input type="radio" ${i === r.selected ? "checked" : ""} disabled>
-                        <label>${opt}</label>
+function displayResults(results) {
+    document.getElementById('quiz').classList.add('hidden');
+    const resultsContainer = document.getElementById('results');
+    resultsContainer.classList.remove('hidden');
+    
+    let scoreClass = 'score-poor';
+    if (results.percentage >= 90) scoreClass = 'score-excellent';
+    else if (results.percentage >= 70) scoreClass = 'score-good';
+    else if (results.percentage >= 50) scoreClass = 'score-needs-improvement';
+    
+    let detailedResults = '';
+    results.detailed_results.forEach(result => {
+        const userAnswer = result.user_answer !== null ? questions
+            .find(q => q.id === result.question_id)?.options[result.user_answer] || 'No answer' : 'No answer';
+        
+        const correctAnswer = questions
+            .find(q => q.id === result.question_id)?.options[result.correct_answer];
+        
+        const question = questions.find(q => q.id === result.question_id);
+        
+        detailedResults += `
+            <div class="result-question">
+                <h3>Q${result.question_id}: ${question.question}</h3>
+                <div class="result-choice ${result.is_correct ? 'correct' : 'incorrect'} user-selected">
+                    Your answer: ${userAnswer}
+                </div>
+                ${!result.is_correct ? `
+                    <div class="result-choice correct">
+                        Correct answer: ${correctAnswer}
                     </div>
-                `;
-            })
-            .join("");
-
-        const cardHtml = `
-            <div class="question-card result-card">
-                <h3>Question ${idx + 1} of ${data.total}</h3>
-                <p class="question-text">${q.question}</p>
-                <div class="options">${optionsHtml}</div>
-                <div class="explanation">${r.explanation}</div>
+                ` : ''}
             </div>
         `;
-        resultsQuestions.insertAdjacentHTML("beforeend", cardHtml);
     });
+    
+    resultsContainer.innerHTML = `
+        <div class="score ${scoreClass}">
+            <h2>Quiz Complete!</h2>
+            <p>Your Score: ${results.score}/${results.total} (${results.percentage}%)</p>
+        </div>
+        <div class="results-details">
+            <h3>Detailed Results:</h3>
+            ${detailedResults}
+        </div>
+        <button onclick="restartQuiz()">Take Quiz Again</button>
+    `;
 }
 
 function restartQuiz() {
+    currentQuestion = 0;
     answers = {};
-    currentIndex = 0;
-
-    document.getElementById("results").classList.add("hidden");
-    document.getElementById("quiz").classList.remove("hidden");
-
-    const submitBtn = document.getElementById("submit-btn");
-    submitBtn.disabled = false;
-    submitBtn.textContent = "Submit Answers";
-
-    showQuestion(0);
+    document.getElementById('quiz').classList.remove('hidden');
+    document.getElementById('results').classList.add('hidden');
+    displayQuestion();
 }
-
-// Keyboard navigation support
-document.addEventListener("keydown", (e) => {
-    // Only handle arrow keys when quiz is visible and not in results
-    if (document.getElementById("quiz").classList.contains("hidden")) return;
-    
-    if (e.key === "ArrowRight" || e.key === "ArrowDown") {
-        e.preventDefault();
-        // Only allow navigation if current question is answered
-        const currentQuestion = questions[currentIndex];
-        const hasAnswer = currentQuestion && answers[currentQuestion.id] !== undefined;
-        if (hasAnswer && currentIndex < questions.length - 1) nextQuestion();
-    } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
-        e.preventDefault();
-        if (currentIndex > 0) prevQuestion();
-    }
-});
-
-// Initialize the quiz
-loadQuestions();
