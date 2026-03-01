@@ -15,7 +15,7 @@
                     <h1>DevLLMOps Quiz</h1>
                     <p class="subtitle">Test your knowledge of AI-native software development</p>
                 </div>
-                <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode">
+                <button id="theme-toggle" class="theme-toggle btn-press-animate" aria-label="Toggle dark mode">
                     <span class="theme-toggle-icon">☽</span>
                 </button>
             </div>
@@ -29,9 +29,9 @@
                 <div class="progress-indicator" id="progress-indicator">Question 1 / 10</div>
                 <div id="question-display"></div>
                 <div class="navigation-controls">
-                    <button id="prev-btn" onclick="prevQuestion()" disabled>&#8592; Previous</button>
-                    <button id="next-btn" onclick="nextQuestion()">Next &#8594;</button>
-                    <button id="submit-btn" class="hidden" onclick="submitAnswers()">Submit Answers</button>
+                    <button id="prev-btn" class="btn-press-animate" onclick="prevQuestion()" disabled>&#8592; Previous</button>
+                    <button id="next-btn" class="btn-press-animate btn-pulse-animate" onclick="nextQuestion()">Next &#8594;</button>
+                    <button id="submit-btn" class="btn-press-animate btn-pulse-animate hidden" onclick="submitAnswers()">Submit Answers</button>
                 </div>
             </div>
         </div>

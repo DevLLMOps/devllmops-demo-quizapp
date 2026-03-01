@@ -89,6 +89,17 @@ function selectOption(questionId, optionIndex) {
     answers[questionId] = optionIndex;
 
     const card = document.getElementById(`q-${questionId}`);
+    const selectedOption = document.getElementById(`q${questionId}-opt${optionIndex}`);
+    
+    // Add selection animation to the clicked option
+    if (selectedOption && window.matchMedia('(prefers-reduced-motion: no-preference)').matches) {
+        selectedOption.classList.add('option-select-animate');
+        // Remove animation class after animation completes
+        setTimeout(() => {
+            selectedOption.classList.remove('option-select-animate');
+        }, 300);
+    }
+
     card.querySelectorAll(".option").forEach((el, i) => {
         el.classList.toggle("selected", i === optionIndex);
         el.querySelector("input").checked = i === optionIndex;
@@ -150,7 +161,7 @@ function showResults(data) {
         <div class="score ${level}">${data.percentage}%</div>
         <p class="score-text">${data.score} out of ${data.total} correct</p>
         <div id="results-questions"></div>
-        <button class="restart-btn" onclick="restartQuiz()">Try Again</button>
+        <button class="restart-btn btn-press-animate" onclick="restartQuiz()">Try Again</button>
     `;
     resultsDiv.classList.remove("hidden");
 
