@@ -10,6 +10,8 @@ html {
     --bg-option-selected: #dbeafe;
     --bg-button-secondary: #f3f4f6;
     --bg-button-secondary-hover: #e5e7eb;
+    --bg-button-previous: #6b7280;
+    --bg-button-previous-hover: #4b5563;
     --bg-explanation: #f6f8fa;
     --bg-progress-track: #e1e4e8;
     
@@ -18,11 +20,14 @@ html {
     --text-muted: #8c959f;
     --text-disabled: #8c959f;
     --text-heading: #1f2328;
+    --text-button-previous: #ffffff;
     
     --border-primary: #d0d7de;
     --border-hover: #0969da;
     --border-selected: #0969da;
     --border-focus: #0969da;
+    --border-button-previous: #6b7280;
+    --border-button-previous-hover: #4b5563;
     
     --accent-primary: #0969da;
     --accent-success: #1a7f37;
@@ -32,6 +37,7 @@ html {
     --shadow-primary: rgba(31, 35, 40, 0.04);
     --shadow-hover: rgba(31, 35, 40, 0.08);
     --shadow-focus: rgba(9, 105, 218, 0.3);
+    --shadow-button-previous: rgba(107, 114, 128, 0.15);
 }
 
 html.dark {
@@ -45,6 +51,8 @@ html.dark {
     --bg-option-selected: #0c2d6b;
     --bg-button-secondary: #21262d;
     --bg-button-secondary-hover: #30363d;
+    --bg-button-previous: #6b7280;
+    --bg-button-previous-hover: #9ca3af;
     --bg-explanation: #0d1117;
     --bg-progress-track: #21262d;
     
@@ -53,11 +61,14 @@ html.dark {
     --text-muted: #8b949e;
     --text-disabled: #484f58;
     --text-heading: #f0f0f0;
+    --text-button-previous: #ffffff;
     
     --border-primary: #30363d;
     --border-hover: #58a6ff;
     --border-selected: #58a6ff;
     --border-focus: #58a6ff;
+    --border-button-previous: #6b7280;
+    --border-button-previous-hover: #9ca3af;
     
     --accent-primary: #58a6ff;
     --accent-success: #3fb950;
@@ -67,6 +78,7 @@ html.dark {
     --shadow-primary: rgba(0, 0, 0, 0.3);
     --shadow-hover: rgba(88, 166, 255, 0.1);
     --shadow-focus: rgba(88, 166, 255, 0.2);
+    --shadow-button-previous: rgba(107, 114, 128, 0.25);
 }
 
 /* Animation keyframes for buttons and interactions */
@@ -372,23 +384,24 @@ html:not(.dark) .option.wrong {
 }
 
 #prev-btn {
-    background: var(--bg-button-secondary);
-    color: var(--text-primary);
-    border: 1px solid var(--border-primary);
+    background: var(--bg-button-previous);
+    color: var(--text-button-previous);
+    border: 1px solid var(--border-button-previous);
     max-width: 140px;
 }
 
 #prev-btn:hover:not(:disabled) {
-    background: var(--bg-button-secondary-hover);
+    background: var(--bg-button-previous-hover);
+    border-color: var(--border-button-previous-hover);
     transform: translateY(-1px);
-    box-shadow: 0 2px 8px var(--shadow-primary);
+    box-shadow: 0 2px 8px var(--shadow-button-previous);
 }
 
 #prev-btn:disabled {
-    background: var(--bg-button-secondary);
+    background: var(--bg-button-previous);
     color: var(--text-disabled);
     cursor: not-allowed;
-    border-color: var(--border-primary);
+    border-color: var(--border-button-previous);
     opacity: 0.6;
 }
 
