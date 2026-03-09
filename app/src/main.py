@@ -9,7 +9,18 @@ from pydantic import BaseModel
 
 from questions import QUESTIONS
 
-app = FastAPI(title="DevLLMOps Quiz", version="1.0.0")
+# Read version from VERSION file
+def get_app_version():
+    """Read version from VERSION file in project root."""
+    try:
+        version_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "VERSION")
+        with open(version_path, "r", encoding="utf-8") as f:
+            return f.read().strip()
+    except Exception:
+        return "1.0.0"  # Fallback version
+
+APP_VERSION = get_app_version()
+app = FastAPI(title="DevLLMOps Quiz", version=APP_VERSION)
 
 STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
@@ -25,6 +36,15 @@ async def root():
 async def health():
     """Health check endpoint."""
     return {"status": "ok"}
+
+
+@app.get("/api/version")
+async def get_version():
+    """Return app version information."""
+    return {
+        "version": APP_VERSION,
+        "repository": "https://github.com/DevLLMOps/devllmops-demo-quizapp"
+    }
 
 
 @app.get("/api/questions")
