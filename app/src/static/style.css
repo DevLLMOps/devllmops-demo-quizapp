@@ -38,6 +38,8 @@ html {
     --shadow-hover: rgba(31, 35, 40, 0.08);
     --shadow-focus: rgba(9, 105, 218, 0.3);
     --shadow-button-previous: rgba(107, 114, 128, 0.15);
+
+    --bg-gradient: linear-gradient(135deg, #eef4ff 0%, #f6f8fa 50%, #ffffff 100%);
 }
 
 html.dark {
@@ -79,6 +81,8 @@ html.dark {
     --shadow-hover: rgba(88, 166, 255, 0.1);
     --shadow-focus: rgba(88, 166, 255, 0.2);
     --shadow-button-previous: rgba(107, 114, 128, 0.25);
+
+    --bg-gradient: linear-gradient(135deg, #0d1117 0%, #0f1420 50%, #131a2e 100%);
 }
 
 /* Animation keyframes for buttons and interactions */
@@ -132,7 +136,8 @@ html.dark {
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    background: var(--bg-primary);
+    background: var(--bg-gradient);
+    background-attachment: fixed;
     color: var(--text-primary);
     min-height: 100vh;
 }
