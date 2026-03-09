@@ -1,0 +1,10 @@
+{
+  "name": "devllmops-quizapp",
+  "version": "1.0.0",
+  "description": "DevLLMOps Quiz Web Application",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DevLLMOps/devllmops-demo-quizapp"
+  },
+  "license": "MIT"
+}

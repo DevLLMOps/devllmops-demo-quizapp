@@ -227,5 +227,19 @@ document.addEventListener("keydown", (e) => {
     }
 });
 
+async function loadVersion() {
+    try {
+        const res = await fetch("/api/version");
+        const data = await res.json();
+        const el = document.getElementById("footer-version");
+        if (el && data.version) {
+            el.textContent = "v" + data.version;
+        }
+    } catch (_) {
+        // Keep the static fallback already in the HTML
+    }
+}
+
 // Initialize the quiz
 loadQuestions();
+loadVersion();

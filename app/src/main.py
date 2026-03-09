@@ -1,5 +1,6 @@
 """DevLLMOps Quiz App - FastAPI backend."""
 
+import json
 import os
 
 from fastapi import FastAPI
@@ -9,7 +10,18 @@ from pydantic import BaseModel
 
 from questions import QUESTIONS
 
-app = FastAPI(title="DevLLMOps Quiz", version="1.0.0")
+_PACKAGE_JSON = os.path.join(os.path.dirname(__file__), "..", "..", "..", "package.json")
+
+def _read_version() -> str:
+    try:
+        with open(_PACKAGE_JSON) as f:
+            return json.load(f).get("version", "1.0.0")
+    except (OSError, json.JSONDecodeError):
+        return "1.0.0"
+
+APP_VERSION = _read_version()
+
+app = FastAPI(title="DevLLMOps Quiz", version=APP_VERSION)
 
 STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
@@ -25,6 +37,12 @@ async def root():
 async def health():
     """Health check endpoint."""
     return {"status": "ok"}
+
+
+@app.get("/api/version")
+async def get_version():
+    """Return the application version."""
+    return {"version": APP_VERSION}
 
 
 @app.get("/api/questions")
