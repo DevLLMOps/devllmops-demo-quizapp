@@ -9,7 +9,7 @@ from pydantic import BaseModel
 
 from questions import QUESTIONS
 
-app = FastAPI(title="DevLLMOps Quiz", version="1.0.0")
+app = FastAPI(title="DevLLMOps", version="1.0.0")
 
 STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
